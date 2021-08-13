@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="row">
+        <h1>Gestion des clients</h1>
+      </header>
+      <hr />
+      <section class="row">
+        <h2 class="mb-4">Ajouter / Modifer un client</h2>
+        <form action="" class="d-flex justify-content-center">
+          <input type="hidden" name="id" id="id" />
+          <input
+            type="text"
+            id="nom"
+            name="nom"
+            class="form-control"
+            placeholder="Nom"
+          />
+          <input
+            type="text"
+            id="tel"
+            name="tel"
+            class="form-control mx-4"
+            placeholder="Telephone"
+          />
+          <input type="submit" class="btn btn-outline-dark" />
+        </form>
+      </section>
+      <hr />
+      <section class="row">
+        <h2>Liste de clients</h2>
+        <div class="row clients">Pas de client pour l'instant</div>
+      </section>
+    </div>
+
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-database.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+
+    <script>
+      // Your web app's Firebase configuration
+      var firebaseConfig = {
+        apiKey: "AIzaSyCwxEwoW5IrYRDM7Ko2dHHT3CRCEHB-SDI",
+        authDomain: "doranco-668b8.firebaseapp.com",
+        databaseURL:
+          "https://doranco-668b8-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "doranco-668b8",
+        storageBucket: "doranco-668b8.appspot.com",
+        messagingSenderId: "855966696168",
+        appId: "1:855966696168:web:74402267f40d64c41cbf5d",
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
+    <script>
+      document.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        let id = e.target.id.value;
+        let nom = e.target.nom.value;
+        let tel = e.target.tel.value;
+        let verif = [];
+        if (id.length == 0) {
+          const refDb = firebase.database().ref("/clients"); //selectionner ou creer une table
+          const nouveauClient = refDb.push();
+          nouveauClient.set({
+            nom: nom,
+            tel: tel,
+          });
+        } else {
+          const refDb = firebase.database().ref(`/clients/${id}`);
+          let clientModifie = {
+            nom: nom,
+            tel: tel,
+          };
+          refDb.update(clientModifie);
+        }
+        e.target.reset();
+        e.target.id.value = "";
+      });
+
+      window.addEventListener("DOMContentLoaded", () => {
+        let refDb = firebase.database().ref("/clients");
+        refDb.on("value", (clients) => {
+          let data = clients.val();
+          console.log(data);
+          let html = "";
+          for (let element in data) {
+            html += `<article class="col-4">
+              <ul class="list-unstyled">
+                <li>Nom: ${data[element].nom}</li>
+                <li>Tel: ${data[element].tel}</li>
+                <li>
+                  <button class="btn btn-outline-warning btn-sm" onclick="modifier('${element}')">Modifier</button>
+                  <button class="btn btn-outline-danger btn-sm" onclick="supprimer('${element}')">Supprimer</button>
+                </li>
+              </ul>
+              </article> `;
+          }
+          document.querySelector(".clients").innerHTML = html;
+        });
+      });
+      function supprimer(id) {
+        firebase.database().ref(`/clients/${id}`).remove();
+      }
+      function modifier(id) {
+        const refDb = firebase.database().ref(`/clients/${id}`);
+        refDb.once("value", (client) => {
+          document.querySelector("#id").value = id;
+          document.querySelector("#nom").value = client.val().nom;
+          document.querySelector("#tel").value = client.val().tel;
+        });
+      }
+    </script>
+  </body>
+</html>
